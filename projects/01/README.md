@@ -330,3 +330,16 @@ For `b`:
 
     for i = 0..15
         out[i] = And(a[i], b[i])
+
+### Or16
+
+#### API
+
+    Chip Name:  Or16
+    Input:      a[16], b[16]
+    Output:     out[16]
+
+#### Function
+
+    for i = 0..15
+        out[i] = Or(a[i], b[i])
