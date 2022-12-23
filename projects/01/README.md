@@ -384,6 +384,63 @@ An _m_-way Or gate outputs 1 when at least on of its _m_ input bits is 1, and 0 
 
 ### Mux4Way16
 
+An _m_-way _n_-bit multiplexer selects one of its _m_ _n_-bit inputs, and outputs it to its _n_-bit output. The selection is specified by a set of _k_ selection bits, where `k = log2(m)`.
+
+#### API
+
+    Chip Name:  Mux4Way16
+    Input:      a[16], b[16], c[16], d[16], sel[2]
+    Output:     out[16]
+
+#### Function
+
+    if (sel == 00, 01, 10, or 11) then
+        out = a, b, c, or d
+
+In other words:
+
+    switch (sel):
+        case 00: out = a
+        case 01: out = b
+        case 10: out = c
+        case 11: out = d
+
+#### Truth Table
+
+|sel[1]|sel[0]|out|
+|:-:|:-:|:-:|
+|0|0|a|
+|0|1|b|
+|1|0|c|
+|1|1|d|
+
+#### Implementation
+
+Given the value of `sel[0]`, you will end up selecting between:
+
+    a OR b
+    AND
+    c OR d
+
+Therefore, you end up with:
+
+    MUX(a, b, sel[0]) AND MUX(c, d, sel[0])
+
+Given the value of `sel[1]`, you will end up selecting between:
+
+    MUX(a, b, sel[0])
+    OR
+    MUX(c, d, sel[0])
+
+Therefore:
+
+    Mux4Way16(a[16], b[16], c[16], d[16], sel[2])
+    <=> Mux16(
+            Mux16(a[16], b[16], sel[0]),
+            Mux16(c[16], d[16], sel[0]),
+            sel[1]
+        )
+
 ### Mux8Way16
 
 ### DMux4Way
