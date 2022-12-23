@@ -8,12 +8,6 @@
  * out = not in
  */
 
- /* PROOF:
-    NOT x
-    <=> NOT (x AND x) [via Idempotency Law]
-    <=> x NAND x [via Sheffer stroke]
- */
-
 CHIP Not {
     IN in;
     OUT out;
