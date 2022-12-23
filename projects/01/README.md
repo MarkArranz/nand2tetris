@@ -54,6 +54,13 @@ Multi-way Variants
 
 ## Elementary Logic Gates
 
+* `Not`
+* `And`
+* `Or`
+* `Xor`
+* `Mux`
+* `DMux`
+
 ### NOT
 
 #### API
@@ -290,3 +297,23 @@ For `a`:
 For `b`:
 
     dmux(sel, in) <=> sel AND in
+
+## 16-bit Variants
+
+* `Not16`
+* `And16`
+* `Or16`
+* `Mux16`
+
+### Not16
+
+#### API
+
+    Chip Name:  Not16
+    Input:      in[16]
+    Output:     Out[16]
+
+#### Function
+
+    for i = 0..15
+        out[i] = Not(in[i])
