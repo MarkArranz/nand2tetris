@@ -9,6 +9,13 @@
  *       0 otherwise
  */
 
+ /* PROOF:
+    a OR b
+    <=> (NOT (NOT a)) OR (NOT (NOT b)) [via involution]
+    <=> NOT ((NOT a) AND (NOT b)) [via De Morgan's Law]
+    <=> (NOT a) NAND (NOT b) [via Sheffer stroke]
+ */
+
 CHIP Or {
     IN a, b;
     OUT out;
