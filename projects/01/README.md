@@ -343,3 +343,19 @@ For `b`:
 
     for i = 0..15
         out[i] = Or(a[i], b[i])
+
+### Mux16
+
+#### API
+
+    Chip Name:  Mux16
+    Input:      a[16], b[16], sel
+    Output:     out[16]
+
+#### Function
+
+    for i = 0..15
+        if (sel == 0) then
+            out[i] = a[i]
+        else
+            out[i] = b[i]
