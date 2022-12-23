@@ -8,10 +8,43 @@
  * out = not (a == b)
  */
 
+ /* PROOF:
+    a XOR b ...
+    ...has the truth table of...
+    || a | b | out ||
+    -----------------
+    || 0 | 0 |  0  ||
+    || 0 | 1 |  1  ||
+    || 1 | 0 |  1  ||
+    || 1 | 1 |  0  ||
+
+    "out" is true only when ...
+        a is False AND b is True
+    ...or when...
+        a is True AND b is False
+
+    "a is False AND b is True"
+    ...can be written as...
+        (NOT a) AND b
+    
+    'a is True AND b is False"
+    ...can be written as...
+        a AND (NOT b)
+
+    Therefore, a XOR b
+    <=> ((NOT a) AND b) OR (a AND (NOT b))
+ */
+
 CHIP Xor {
     IN a, b;
     OUT out;
 
     PARTS:
-    // Put your code here:
+    Not(in=a, out=notA);
+    And(a=notA, b=b, out=aFalseAndBTrue);
+
+    Not(in=b, out=notB);
+    And(a=a, b=notB, out=aTrueAndbFalse);
+
+    Or(a=aFalseAndbTrue, b=aTrueAndbFalse, out=out);
 }
