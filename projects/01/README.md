@@ -359,3 +359,33 @@ For `b`:
             out[i] = a[i]
         else
             out[i] = b[i]
+
+## Multi-way Variants
+
+* `Or8Way`
+* `Mux4Way16`
+* `Mux8Way16`
+* `DMux4Way`
+* `DMux8Way`
+
+### Or8Way
+
+An _m_-way Or gate outputs 1 when at least on of its _m_ input bits is 1, and 0 otherwise.
+
+#### API
+
+    Chip Name:  Or8Way
+    Input:      in[8]
+    Output:     out
+
+#### Function
+
+    out = Or(in[0], in[1],...,in[7])
+
+### Mux4Way16
+
+### Mux8Way16
+
+### DMux4Way
+
+### DMux8Way
