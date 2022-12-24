@@ -416,21 +416,28 @@ In other words:
 
 #### Implementation
 
-Given the value of `sel[0]`, you will end up selecting between:
+Given the value of `sel[0]`, you reduce the possible `out` values by 1/2, from 4 to 2:
 
-    a OR b
-    AND
-    c OR d
+    SELECT(a OR b)
 
-Therefore, you end up with:
+and:
 
-    MUX(a, b, sel[0]) AND MUX(c, d, sel[0])
+    SELECT(c OR d)
 
-Given the value of `sel[1]`, you will end up selecting between:
+Therefore:
 
     MUX(a, b, sel[0])
-    OR
+
+and:
+
     MUX(c, d, sel[0])
+
+Given the value of `sel[1]`, you further reduce the possible `out` values by 1/2, from 2 to 1:
+
+    SELECT(
+        MUX(a, b, sel[0])
+        OR MUX(c, d, sel[0])
+    )
 
 Therefore:
 
@@ -442,6 +449,50 @@ Therefore:
         )
 
 ### Mux8Way16
+
+#### API
+
+    Chip Name:  Mux8Way16
+    Input:      a[16], b[16], c[16], d[16],
+                e[16], f[16], g[16], h[16], sel[3]
+    Output:     out[16]
+
+#### Function
+
+    if (sel == 000, 001, 010,... or 111) then
+        out = a, b, c, ...or h
+
+#### Truth Table
+
+|sel[2]|sel[1]|sel[0]|out|
+|:-:|:-:|:-:|:-:|
+|0|0|0|a|
+|0|0|1|b|
+|0|1|0|c|
+|0|1|1|d|
+|1|0|0|e|
+|1|0|1|f|
+|1|1|0|g|
+|1|1|1|h|
+
+#### Implementation
+
+Following a similar pattern to `Mux4Way16`, we can split the possible outputs into two groups, reducing our options from 8 to 2. By using the first two bits of `sel` and our newly created `Mux4Way16` gate, we get:
+
+    Mux4Way16(a, b, c, d, sel[0..1])
+
+...and...
+
+    Mux4Way16(e, f, g, h, sel[0..1])
+
+Now that we only two selections to choose from, we can use `Mux16` and the third bit of `sel` to end up with only one channel selection:
+
+    Mux8Way16(a, b, c, d, e, f, g, h, sel[3])
+    <=> Mux16(
+            Mux4Way16(a, b, c, d, sel[0..1]),
+            Mux4Way16(e, f, g, h, sel[0..1]),
+            sel[2]
+        )
 
 ### DMux4Way
 
