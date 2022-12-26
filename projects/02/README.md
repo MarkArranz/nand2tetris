@@ -64,15 +64,59 @@ Therefore:
 
 ## The _Full-adder_ Chip
 
+Designed to add three bits.
+
 ### Interface
 
 #### API
 
+    Chip Name:  FullAdder
+    Input:      a, b, c
+    Output:     sum, carry
+
 #### Function
+
+    sum     = LSB of a + b + c
+    carry   = MSB of a + b + c
 
 #### Truth Table
 
+a|b|c|carry|sum
+:-:|:-:|:-:|:-:|:-:|
+0|0|0|0|0|
+0|0|1|0|1|
+0|1|0|0|1|
+0|1|1|1|0|
+1|0|0|0|1|
+1|0|1|1|0|
+1|1|0|1|0|
+1|1|1|1|1|
+
 ### Implementation
+
+We already have a _half-adder_ that can add two bit together. We can use that to add `a` and `b`, then add the sum of `a` & `b` to `c` to get the final `sum`.
+
+    HalfAdder(a, b) => sumAB, firstCarry
+    HalfAdder(sumAB, c) => sumAll, secondCarry
+
+We can then use the `carry` values from each _half-adder_ operation into a final _half-adder_ operation to calculate the final `carry` value.
+
+    HalfAdder(firstCarry, secondCarry) => sumOfCarries, ignoredCarry
+
+This may be overkill, however, since we don't care about the `carry` value of this final operation, only the `sum`. So we can save extra cycles by just using the `Xor` from the _half-adder_ that is responsible for caluclating the `sum` value.
+
+    HalfAdder(firstCarry, secondCarry) => sumOfCarries, thirdCarry
+    <=> Xor(firstCarry, secondCarry) => sumOfCarries
+        And(firstCarry, secondCarry) => thirdCarry
+
+Therefore:
+    FullAdder(a, b, c) => sum, carry
+    <=> HalfAdder(a, b) => sumAB, firstCarry
+        HalfAdder(sumAB, c) => sumAll, secondCarry
+        Xor(firstCarry, secondCarry) => sumOfCarries
+
+        sum = sumAll
+        carry = sumOfCarries
 
 ## The _Adder_ Chip
 
