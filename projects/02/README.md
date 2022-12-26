@@ -150,11 +150,21 @@ Starting from the LSBs to the MSBs, add the bits together in addition to any car
 
 #### API
 
+    Chip Name:  Inc16
+    Input:      in[16]
+    Output:     out[16]
+
 #### Function
 
-#### Truth Table
+    out = in + 1
+The overflow bit is ignored.
 
 ### Implementation
+
+We can just use our new `Add16` chip.
+
+    Inc16(in) => out
+    <=> Add16(a=in, b[0]=true) => out
 
 ## The _ALU_
 
