@@ -623,3 +623,46 @@ Therefore:
     ) [via dmux abstraction]
 
 ### DMux8Way
+
+An _m_-way _n_-bit demultiplexer routes its single _n_-bit input to one of its _m_ _n_-bit outputs. The other outputs are set to 0. The seletion is specified by a set of _k_ selection bits, where `k = log2(m)`.
+
+#### API
+
+    Chip Name:  DMux8Way
+    Input:      in, sel[3]
+    Output:     a, b, c, d, e, f, g, h
+
+#### Function
+
+    if (sel == 000) then
+        {a, b, c,..., h} = {1, 0, 0, 0, 0, 0, 0, 0}
+    else if (sel == 001) then
+        {a, b, c,..., h} = {0, 1, 0, 0, 0, 0, 0, 0}
+    else if (sel == 010) then
+        {a, b, c,..., h} = {0, 0, 1, 0, 0, 0, 0, 0}
+    ...
+    else if (sel == 111) then
+        {a, b, c,..., h} = {0, 0, 0, 0, 0, 0, 0, 1}
+
+#### Truth Table
+
+|sel[2]|sel[1]|sel[0]|a|b|c|d|e|f|g|h|
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+|0|0|0|in|0|0|0|0|0|0|0|
+|0|0|1|0|in|0|0|0|0|0|0|
+|0|1|0|0|0|in|0|0|0|0|0|
+|0|1|1|0|0|0|in|0|0|0|0|
+|1|0|0|0|0|0|0|in|0|0|0|
+|1|0|1|0|0|0|0|0|in|0|0|
+|1|1|0|0|0|0|0|0|0|in|0|
+|1|1|1|0|0|0|0|0|0|0|in|
+
+#### Implementation
+
+We can can reduce the possible outputs from 8 to 2 using two of our newly created `DMux4Way` gates, and then again from 2 to 1 using one `DMux` gate.
+
+    DMux8Way(in, sel[3], a, b, c, d, e, f, g, h)
+    <=> DMux(in, sel[2],
+            a=DMux4Way(in=abcORd, sel[0..1], a, b, c, d)
+            b=DMux4Way(in=efgORh, sel[0..1], e, f, g, h)
+        ) [via Decomposition]
