@@ -120,15 +120,29 @@ Therefore:
 
 ## The _Adder_ Chip
 
+Computers represent integer numbers using a fixed word size like 8, 16, 32, or 64 bits. _Adder_ chips are responsible for adding two such _n_-bit numbers.
+
 ### Interface
 
 #### API
 
+    Chip Name:  Add16
+    Input:      a[16], b[16]
+    Output:     out[16]
+
 #### Function
 
-#### Truth Table
+Adds two 16-bit numbers. The overflow bit is ignored.
 
 ### Implementation
+
+Starting from the LSBs to the MSBs, add the bits together in addition to any carry value that exists.
+
+    Adder(a[16], b[16]) => out[16]
+    <=> HalfAdder(a[0], b[0]) => out[0], carry0
+        FullAdder(a[1], b[1], carry0) => out[1], carry1
+        ...
+        FullAdder(a[15], b[15], carry14) => out[15], carry15 // ignored carry value
 
 ## The _Incrementer_ Chip
 
