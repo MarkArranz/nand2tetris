@@ -290,13 +290,17 @@ and is true for `b` only when:
 
 Then:
 
-For `a`:
-
-    dmux(sel, in) <=> (NOT sel) AND in
-
-For `b`:
-
-    dmux(sel, in) <=> sel AND in
+    dmux(sel, in)
+    <=> (
+            (NOT sel) AND in // on channel `a`
+        ) OR (
+            sel AND in // on channel `b`
+        ) [via truth table synthesis]
+    <=> in AND (
+            (NOT sel) // on channel `a`
+            OR
+            sel // on channel `b`
+        ) [via Distributive Law]
 
 ## 16-bit Variants
 
@@ -495,5 +499,127 @@ Now that we only two selections to choose from, we can use `Mux16` and the third
         )
 
 ### DMux4Way
+
+An _m_-way _n_-bit demultiplexer routes its single _n_-bit input to one of its _m_ _n_-bit outputs. The other outputs are set to 0. The seletion is specified by a set of _k_ selection bits, where `k = log2(m)`.
+
+#### API
+
+    Chip Name:  DMux4Way
+    Input:      in, sel[2]
+    Output:     a, b, c, d
+
+#### Function
+
+    if (sel == 00) then
+        {a, b, c, d} = {1, 0, 0, 0}
+    else if (sel == 01) then
+        {a, b, c, d} = {0, 1, 0, 0}
+    else if (sel == 10) then
+        {a, b, c, d} = {o, 0, 1, 0}
+    else if (sel == 11) then
+        {a, b, c, d} = {o, 0, 0, 1}
+
+#### Truth Table
+
+|sel[1]|sel[0]|a|b|c|d|
+|:-:|:-:|:-:|:-:|:-:|:-:|
+|0|0|in|0|0|0|
+|0|1|0|in|0|0|
+|1|0|0|0|in|0|
+|1|1|0|0|0|in|
+
+#### Implementation
+
+From the truth table, we can synthesize that `DMux4way` ouputs a true value...
+
+on the `a` channel when:
+
+    sel[1] = 0 AND sel[0] = 0 AND in = 1
+
+on the 'b' channel when:
+
+    sel[1] = 0 AND sel[0] = 1 AND in = 1
+
+on the `c` channel when:
+
+    sel[1] = 1 AND sel[0] = 0 AND in = 1
+
+on the `d` channel when:
+
+    sel[1] = 1 AND sel[0] = 1 AND in = 1
+
+Therefore:
+
+    Dmux4Way(in, sel[2], a, b, c, d)
+    <=> (
+            (NOT sel[1]) AND (NOT sel[0]) AND in // on channel `a`
+        ) OR (
+            (NOT sel[1]) AND sel[0] AND in // on channel `b`
+        ) OR (
+            sel[1] AND (NOT sel[0]) AND in // on channel `c`
+        ) OR (
+            sel[1] AND sel[0] AND in // on channel `d`
+        ) [via truth table synthesis]
+    <=> in AND (
+            ((NOT sel[1]) AND (NOT sel[0])) // on channel a
+            OR
+            ((NOT sel[1]) AND sel[0]) // on channel b
+            OR
+            (sel[1] AND (NOT sel[0])) // on channel c
+            OR
+            (sel[1] AND sel[0]) // on channel d
+        ) [via Distributive Law]
+    <=> in AND (
+            (NOT sel[1] AND
+                (
+                    (NOT sel[0]) // on channel a
+                    OR
+                    sel[0] // on channel b
+                )
+            )
+            OR
+            (sel[1] AND
+                (
+                    (NOT sel[0]) // on channel c
+                    OR
+                    sel[0] // on channel d
+                )
+            )
+        ) [via Distributive Law]
+    <=> in AND (
+        (NOT sel[1] AND
+            (
+                (NOT sel[0]) // on channel a
+                OR
+                sel[0] // on channel b
+            )
+        )
+        OR
+        (sel[1] AND
+            (
+                (NOT sel[0]) // on channel c
+                OR
+                sel[0] // on channel d
+            )
+        )
+    ) [via Distributive Law]
+    <=> dmux(in, sel[1], 
+        a=(
+            (NOT sel[0]) // on channel a
+            OR
+            sel[0] // on channel b
+        ),
+        b=(
+            (NOT sel[0]) // on channel c
+            OR
+            sel[0] // on channel d
+        )
+    ) [via dmux abstraction]
+    <=> dmux(in=in, sel=sel[1], 
+            // on channel `a` or `b`
+            a=dmux(in=aORb, sel=sel[0], a=a, b=b),
+            // on channel `c` or `d`
+            b=dumx(in=cORd, sel=sel[0], a=c, b=d)
+    ) [via dmux abstraction]
 
 ### DMux8Way
