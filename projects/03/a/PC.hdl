@@ -16,5 +16,13 @@ CHIP PC {
     OUT out[16];
 
     PARTS:
-    // Put your code here:
+    Inc16(in=reg, out=regInc);
+    // Should increment?
+    Mux16(a=reg, b=regInc, sel=inc, out=mux0);
+    // Should load the in value?
+    Mux16(a=mux0, b=in, sel=load, out=mux1);
+    // Should reset?
+    Mux16(a=mux1, b=false, sel=reset, out=val);
+    // Save count state
+    Register(in=val, load=true, out=reg, out=out);
 }

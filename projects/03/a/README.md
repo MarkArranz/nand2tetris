@@ -8,8 +8,8 @@ Create the following chips:
 
 * Bit (1-bit register)
 * Register (16-bit register)
-* RAM8 & RAM64
-* PC (Counter)
+* RAM8 & RAM64 (RAM _n_)
+* PC (Program Counter)
 
 ## Bit (1-bit register)
 
@@ -147,3 +147,37 @@ We end up with:
             a=reg0to7, b=reg7to15,
             ..., h=reg56to63,
             sel=address[0..2]) => out
+
+## PC (Program Counter)
+
+The `PC` chip knows how to:
+
+1. increment its value by 1 each time unit
+2. reset its counter to 0
+3. set the counter to a given value, _v_
+
+### API
+
+    Chip Name:  PC
+    Input:      in[16], load, inc, reset
+    Output:     out[16]
+
+### Function
+
+    if  reset(t) then       out(t+1) = 0
+    else if load(t) then    out(t+1) = in(t)
+    else if inc(t) then     out(t+1) = out(t) + 1
+    else                    out(t+1) = out(t)
+NOTE: To use it properly, at most one of the `load`, `inc`, or `reset` bits should be asserted.
+
+### Implementation
+
+When we see `if ... else`, we know we will need a `Mux` gate. When we see an `if ... else if ... else` chain, we know we will need a chain of `Mux` gates. We construct our `Mux` gates in reverse order of the `if .. else` chain.
+
+    PC(in, reset, load, inc) => out
+    <=> Inc16(in=reg) => regInc
+        Mux16(a=reg, b=regInc, sel=inc) => mux0
+        Mux16(a=mux0, b=in, sel=load) => mux1
+        Mux16(a=mux1, b=false, sel=reset) => val
+        Register(in=val, load=true) => reg
+                                    => out
