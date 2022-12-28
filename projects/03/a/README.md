@@ -125,3 +125,25 @@ In order to properly write to one of these 8 `Register` chips, we need to select
         Register(in=in, load=load7) => reg7
 
         Mux8Way16(a=reg0, b=reg1,..., h=reg7, sel=address) => out
+
+For the `RAM64` chip, we follow `RAM8` chip's lead. The major differences are that the `RAM64` chip:
+
+1. Uses the `RAM8` chip instead of `Register` chips.
+2. Uses the 3 least significant bits of the `address` input to select between the 8 `RAM8` chips.
+3. Uses the 3 most significant bits of the `address` input as input to `RAM8` chip's `address`.
+
+We end up with:
+
+    RAM64(in[16], load, address[6]) => out
+    <=> DMux8Way(in=load, sel=address[0..2]) =>
+            { load0to7, load8to15, ..., load56to63 }
+
+        RAM8( in=in, load=load0to7, address=address[3..5]) => reg0to7
+        RAM8( in=in, load=load8to15, address=address[3..5]) => reg8to15
+        ...
+        RAM8(in=in, load=load56to63, address=address[3..5]) => reg56to63
+
+        Mux8Way16(
+            a=reg0to7, b=reg7to15,
+            ..., h=reg56to63,
+            sel=address[0..2]) => out
