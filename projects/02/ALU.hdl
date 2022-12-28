@@ -42,5 +42,38 @@ CHIP ALU {
         ng; // 1 if (out < 0),  0 otherwise
 
     PARTS:
-   // Put you code here:
+    // zx: zero the x input?
+    Mux16(a=x, b[0]=false, sel=zx, out=zxOut);
+
+    // nx: negate the x input?
+    Not16(in=zxOut, out=notX);
+    Mux16(a=zxOut, b=notX, sel=nx, out=nxOut);
+
+    // zy: zero the y input?
+    Mux16(a=y, b[0]=false, sel=zy, out=zyOut);
+
+    // ny: negate the y input?
+    Not16(in=zyOut, out=notY);
+    Mux16(a=zyOut, b=notY, sel=ny, out=nyOut);
+
+    // f: if f == 1 then x + y else x & y
+    And16(a=nxOut, b=nyOut, out=andOut);
+    Add16(a=nxOut, b=nyOut, out=addOut);
+    Mux16(a=andOut, b=addOut, sel=f, out=fOut);
+
+    // no: negate the output?
+    Not16(in=fOut, out=notFOut);
+    Mux16(a=fOut, b=notFOut, sel=no, out[0..7]=lowTempOut, out[8..14]=highTempOut, out[15]=isNg);
+
+    // out: 16-bit output
+    Or16(a[0..7]=lowTempOut, a[8..14]=highTempOut, a[15]=isNg, b[0..15]=false, out=out);
+
+    // zr: if (out == 0) then 1 else 0
+    Or8Way(in=lowTempOut, out=containsOneLow);
+    Or8Way(in[0..6]=highTempOut, in[7]=isNg, out=containsOneHigh);
+    Or(a=containsOneLow, b=containsOneHigh, out=isNotZero);
+    Not(in=isNotZero, out=zr);
+
+    // ng: if (out < 0) then 1 else 0
+    And(a=isNg, b=true, out=ng);
 }

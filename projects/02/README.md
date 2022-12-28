@@ -10,15 +10,13 @@
 
 Designed to add two bits.
 
-### Interface
-
-#### API
+### API
 
     Chip Name:  HalfAdder
     Input:      a, b
     Output:     sum, carry
 
-#### Function
+### Function
 
     sum     = LSB of a + b
     carry   = MSB of a + b
@@ -27,7 +25,7 @@ LSB: Least Significant Bit
 
 MSB: Most Significant Bit
 
-#### Truth Table
+### Truth Table
 
 a|b|carry|sum
 :-:|:-:|:-:|:-:
@@ -66,20 +64,18 @@ Therefore:
 
 Designed to add three bits.
 
-### Interface
-
-#### API
+### API
 
     Chip Name:  FullAdder
     Input:      a, b, c
     Output:     sum, carry
 
-#### Function
+### Function
 
     sum     = LSB of a + b + c
     carry   = MSB of a + b + c
 
-#### Truth Table
+### Truth Table
 
 a|b|c|carry|sum
 :-:|:-:|:-:|:-:|:-:|
@@ -122,15 +118,13 @@ Therefore:
 
 Computers represent integer numbers using a fixed word size like 8, 16, 32, or 64 bits. _Adder_ chips are responsible for adding two such _n_-bit numbers.
 
-### Interface
-
-#### API
+### API
 
     Chip Name:  Add16
     Input:      a[16], b[16]
     Output:     out[16]
 
-#### Function
+### Function
 
 Adds two 16-bit numbers. The overflow bit is ignored.
 
@@ -146,15 +140,13 @@ Starting from the LSBs to the MSBs, add the bits together in addition to any car
 
 ## The _Incrementer_ Chip
 
-### Interface
-
-#### API
+### API
 
     Chip Name:  Inc16
     Input:      in[16]
     Output:     out[16]
 
-#### Function
+### Function
 
     out = in + 1
 The overflow bit is ignored.
@@ -168,12 +160,121 @@ We can just use our new `Add16` chip.
 
 ## The _ALU_
 
-### Interface
+### API
 
-#### API
+    Chip Name:  ALU
+    Input:      x[16], y[16],   // Two 16-bit data inputs
+                zx,             // Zero the x input
+                nx,             // Negate the x input
+                zy,             // Zero the y input
+                ny,             // Negate the y input
+                f,              // if f==1 out=add(x,y) else out=and(x,y)
+                no              // Negate the output
+    Output:     out[16],        // 16-bit output
+                zr,             // if out==0 zr=1 else zr=0
+                ng              // if out<0 ng=1 else ng=0
 
-#### Function
+### Function
 
-#### Truth Table
+    if zx x=0                   // 16-bit zero constant
+    if nx x=!x                  // Bit-wise negation
+    if zy y=0                   // 16-bit zero constant
+    if ny y=!y                  // Bit-wise negation
+    if f out=x+y                // Integer two's complement addition
+    else out=x&y                // Bit-wise And
+    if no out=!out              // Bit-wise negation
+    if out==0 zr=1 else zr=0    // 16-bit equality comparison
+    if out<0 ng=1 else ng=0     // Two's complement comparison
+The overflow bit is ignored.
+
+### Truth Table
+
+zx|nx|zy|ny|f|no|out
+:-:|:-:|:-:|:-:|:-:|:-:|:-:
+1|0|1|0|1|0|0
+1|1|1|1|1|1|1
+1|1|1|0|1|0|-1
+0|0|1|1|0|0|x
+1|1|0|0|0|0|y
+0|0|1|1|0|1|!x
+1|1|0|0|0|1|!y
+0|0|1|1|1|1|-x
+1|1|0|0|1|1|-y
+0|1|1|1|1|1|x+1
+1|1|0|1|1|1|y+1
+0|0|1|1|1|0|x-1
+1|1|0|0|1|0|y-1
+0|0|0|0|1|0|x+y
+0|1|0|0|1|1|x-y
+0|0|0|1|1|1|y-x
+0|0|0|0|0|0|x&y
+0|1|0|1|0|1|x\|y
 
 ### Implementation
+
+Address each of the input control bits one at a time.
+
+#### zx: Zero the x input
+
+Function:
+
+    if zx == 1 then x = 0 else x = x
+
+Implementation:
+
+    Mux16(a=x, b[0]=false, sel=zx) => zxOut
+
+#### nx: Negate the x input
+
+Function:
+
+    if nx == 1 then x = !x else x = x
+
+Implementation:
+
+    Not16(in=x) => notX
+    Mux16(a=zxOut, b=notX, sel=nx) => nxOut
+
+#### zy: Zero the y input
+
+Function:
+
+    if (zy == 1) then y = 0 else y = y
+
+Implementation:
+
+    Mux16(a=y, b[0]=false, sel=zy) => zyOut
+
+#### ny: Negate the y input
+
+Function:
+
+    if (ny == 1) then y = !y else y = y
+
+Implementation:
+
+    Not16(in=y) => notY
+    Mux16(a=zyOut, b=notY, sel=ny) => nyOut
+
+#### f: if f==1 out=add(x,y) else out=and(x,y)
+
+Function:
+
+    if (f == 1) then out = add(x,y) else out = and(x,y)
+
+Implementation:
+
+    And16(a=nxOut, b=nyOut) => andXY
+    Add16(a=nxOut, b=nyOut) => addXY
+    Mux16(a=andXY, b=addXY, sel=f) => fOut
+
+#### no: Negate the output
+
+Function:
+
+    if (no == 1) then out = !out else out = out
+
+Implementation:
+
+    Not16(in=fOut) => notFOut
+    Mux16(a=fOut, b=notFOut, sel=no) => out
