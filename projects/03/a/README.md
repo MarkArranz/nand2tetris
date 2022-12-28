@@ -1,15 +1,14 @@
 # Memory Chips
 
-Given as a primitive:
+Given as a primitive chip:
 
-    * data flip-flops (DFF)
+* Data Flip-Flops (DFF)
 
 Create the following chips:
 
 * Bit (1-bit register)
 * Register (16-bit register)
-* RAM8
-* RAM64
+* RAM8 & RAM64
 * PC (Counter)
 
 ## Bit (1-bit register)
@@ -54,6 +53,7 @@ To complete the implementation, we also need the `DFF` chip to route it's output
     <=> Mux(a=dffOut, b=in sel=load) => muxOut
         DFF(in=muxOut) => dffOut
                        => out
+NOTE: The `Bit` register is the only chip in the Hack architecture that uses a `DFF` gate directly; all the higher-level memory devices in the computer use `DFF` chips indirectly, by virtue of using `Register` chips made of `Bit` chips.
 
 ## Register (16-bit)
 
@@ -80,3 +80,48 @@ This one is rather straightforward. We can use our newly created `Bit` register 
         Bit(in=in[1], load=load, out[1])
         ...
         Bit(in=in[15], load=load, out[15])
+
+## RAM8 & RAM64 (RAM _n_)
+
+A RAM chip, consisting of _n_ 16-bit `Register` chips that can be selected and manipulated separately.
+
+### API
+
+    Chip Name:  RAMn
+    Input:      in[16], load, address[k]
+    Output:     out[16]
+NOTE: _k_ = log2(_n_)
+
+### Function
+
+`out` emits the value stored at the memory location (register) specified by `address`.
+
+If `load == 1`, then the memory location specified by `address` is set to the value of `in`.
+
+The loaded value will be emitted by `out` from the next time step onward.
+
+### Implementation
+
+The RAM implementation must ensure that the access time to any register in the RAM will be nearly instantaneous.
+
+For the `RAM8` chip, we can utilize a `Mux8Way16` gate to select 1 of 8 different `Register` chips to read from.
+
+    RAM8(in[16], load, address[3]) => out
+    <=> Register(in, load) => reg0
+        Register(in, load) => reg1
+        ...
+        Register(in, load) => reg7
+
+        Mux8Way16(a=reg0, b=reg1,..., h=reg7, sel=address) => out
+
+In order to properly write to one of these 8 `Register` chips, we need to select which of the 8 to write to given the `address` input. We can use a `DMux8Way` to figure out which of the 8 `Register` chips to write `in` to when `load` is 1.
+
+    RAM8(in[16], load, address[3]) => out
+    <=> DMux8Way(in=load, sel=address, a=load0, b=load1, ..., h=load7)
+
+        Register(in=in, load=load0) => reg0
+        Register(in=in, load=load1) => reg1
+        ...
+        Register(in=in, load=load7) => reg7
+
+        Mux8Way16(a=reg0, b=reg1,..., h=reg7, sel=address) => out
