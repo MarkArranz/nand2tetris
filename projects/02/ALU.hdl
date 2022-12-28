@@ -63,17 +63,16 @@ CHIP ALU {
 
     // no: negate the output?
     Not16(in=fOut, out=notFOut);
-    Mux16(a=fOut, b=notFOut, sel=no, out[0..7]=lowTempOut, out[8..14]=highTempOut, out[15]=isNg);
+    Mux16(a=fOut, b=notFOut, sel=no,
+        // out: 16-bit output
+        out=out,
+        // ng: if (out < 0) then 1 else 0
+        out[15]=ng,
+        // zr: if (out == 0) then 1 else 0
+        out[0..7]=lowTempOut, out[8..15]=highTempOut);
 
-    // out: 16-bit output
-    Or16(a[0..7]=lowTempOut, a[8..14]=highTempOut, a[15]=isNg, b[0..15]=false, out=out);
-
-    // zr: if (out == 0) then 1 else 0
     Or8Way(in=lowTempOut, out=containsOneLow);
-    Or8Way(in[0..6]=highTempOut, in[7]=isNg, out=containsOneHigh);
+    Or8Way(in=highTempOut, out=containsOneHigh);
     Or(a=containsOneLow, b=containsOneHigh, out=isNotZero);
     Not(in=isNotZero, out=zr);
-
-    // ng: if (out < 0) then 1 else 0
-    And(a=isNg, b=true, out=ng);
 }
