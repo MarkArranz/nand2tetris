@@ -54,3 +54,29 @@ To complete the implementation, we also need the `DFF` chip to route it's output
     <=> Mux(a=dffOut, b=in sel=load) => muxOut
         DFF(in=muxOut) => dffOut
                        => out
+
+## Register (16-bit)
+
+Stores and emits a 16-bit value until instructed to load a new value.
+
+### API
+
+    Chip Name:  Register (16-bit register)
+    Input:      in[16], load
+    Output:     out[16]
+
+### Function
+
+    if load(t) then out(t+1) = in(t)
+    else            out(t+1) = out(t)
+Comment: "=" is a 16-bit operation.
+
+### Implementation
+
+This one is rather straightforward. We can use our newly created `Bit` register for each of the 16 bits that this `Register` chip needs.
+
+    Register(in[16], load) => out[16]
+    <=> Bit(in=in[0], load=load, out[0])
+        Bit(in=in[1], load=load, out[1])
+        ...
+        Bit(in=in[15], load=load, out[15])
