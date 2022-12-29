@@ -4,9 +4,9 @@ This repository contains my code for implementing each of the projects from Noam
 
 ## Overview
 
-"The Nand to Tetris journey entails twelve hardware and software construction projects. The general direction of development across these projects, as well as the book’s table of contents, imply a bottom-up journey: we start with elementary logic gates and work our way upward, leading to a high-level, object-based programming language.”
+> "The Nand to Tetris journey entails twelve hardware and software construction projects. The general direction of development across these projects, as well as the book’s table of contents, imply a bottom-up journey: we start with elementary logic gates and work our way upward, leading to a high-level, object-based programming language.”
 
-Excerpt From
+\- Excerpt From
 _The Elements of Computing Systems, Second Edition_
 
 ### Hardware
