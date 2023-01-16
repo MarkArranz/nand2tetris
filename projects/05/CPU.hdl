@@ -39,5 +39,112 @@ CHIP CPU {
         pc[15];          // address of next instruction
 
     PARTS:
-    // Put your code here:
+    /* FLOW of CPU
+       1. A-instruction or C-instruction?
+            * If MSB of instruction = 0, then load instruction to A-Register.
+            * IF MSB of instruction = 1, then decode instruction as a C-instruction.
+       2. For C-instruction, decode instruction.
+            * instruction[6..12] = comp = what to compute
+            * instruction[3..5]  = dest = where to store the value
+            * instruction[0..2]  = jump = what to do next
+       3. For A-instruction, load instruction to A-register.
+    **/
+
+    // 1. A-instruction or C-instruction?
+    //     * If MSB of instruction = 0, then load instruction to A-Register.
+    //     * IF MSB of instruction = 1, then decode instruction as a C-instruction.
+    Not(in=instruction[15], out=isAInstruction);
+    Not(in=isAInstruction, out=isCInstruction);
+
+    // 2. For C-instruction, decode instruction.
+    //     * instruction[0..2]  = jump = what to do next
+    DMux8Way(in=isCInstruction, sel=instruction[0..2],
+        a=jumpNVR, b=ifGT, c=ifEQ, d=ifGE,
+        e=ifLT,    f=ifNE, g=ifLE, h=jumpJMP);
+
+    // Is NOT ZERO
+    Not(in=isZero, out=isNotZero);
+    // Is NOT NEGATIVE
+    Not(in=isNeg, out=isNotNeg);
+    // Is POSITIVE
+    And(a=isNotZero, b=isNotNeg, out=isPos);
+
+    // Jump because comp is...
+    // ...> 0?
+    And(a=ifGT, b=isPos, out=jumpGT);
+    // ... == 0?
+    And(a=ifEQ, b=isZero, out=jumpEQ);
+    // ... >= 0?
+    Or(a=isPos, b=isZero, out=isGE);
+    And(a=ifGE, b=isGE, out=jumpGE);
+    // ... < 0?
+    And(a=ifLT, b=isNeg, out=jumpLT);
+    // ... != 0?
+    And(a=ifNE, b=isNotZero, out=jumpNE);
+    // ... <= 0?
+    Or(a=isNeg, b=isZero, out=isLE);
+    And(a=ifLE, b=isLE, out=jumpLE);
+
+    // Conditional JUMP?
+    Or8Way(
+        in[0]=false, // no effect
+        in[1]=jumpGT,
+        in[2]=jumpEQ,
+        in[3]=jumpGE,
+        in[4]=jumpLT,
+        in[5]=jumpNE,
+        in[6]=jumpLE,
+        in[7]=jumpJMP,
+        out=jumpMet);
+
+    //     * instruction[3..5]  = dest = where to store the value
+    //          i[3]: storeInM
+    And(a=instruction[3], b=isCInstruction, out=storeInM);
+    Mux(a=false, b=true, sel=storeInM, out=writeM);
+    Mux16(a=false, b=fromALU, sel=storeInM, out=outM);
+    //          i[4]: storeInD
+    And(a=instruction[4], b=isCInstruction, out=loadRegD);
+    //          i[5]: storeInA
+    And(a=instruction[5], b=isCInstruction, out=loadFromALU);
+    Or(a=isAInstruction, b=loadFromALU, out=loadRegA);
+
+    //     * instruction[6..12] = comp = what to compute
+    //          i[12] = a
+    //          a = 0: use A
+    //          a = 1: use M
+    And(a=instruction[12], b=isCInstruction, out=selectM);
+
+    /* KEY CPU CHIPS */
+    // 3. For A-instruction, load instruction to A-register
+    Mux16(a=instruction, b=fromALU, sel=loadFromALU, out=fromMux0);
+
+    // Address Register
+    // 1. stores values that are used to address the RAM
+    // 2. selects an address in the instruction memory
+    // 3. selects an address in the data memory
+    ARegister(in=fromMux0, load=loadRegA, out=fromRegA, out[0..14]=addressM);
+    Mux16(a=fromRegA, b=inM, sel=selectM, out=fromAorM);
+
+    // Data Register
+    // - stores interim values
+    DRegister(in=fromALU, load=loadRegD, out=fromRegD);
+    Mux16(a=false, b=fromRegD, sel=isCInstruction, out=useRegD);
+
+    // Arithmetic Logic Unit
+    ALU(x=useRegD, y=fromAorM,
+        zx=instruction[11], nx=instruction[10], zy=instruction[9],
+        ny=instruction[8],  f=instruction[7],   no=instruction[6],
+        out=fromALU, 
+        zr=isZero, ng=isNeg);
+
+    // Program Counter
+    // - stores the address of the instruction that should be
+    //   fetched and executed next
+    And(a=jumpMet, b=isCInstruction, out=loadFromA);
+
+    Not(in=jumpMet, out=jumpNotMet);
+    Or(a=jumpNotMet, b=jumpNVR, out=noJump);
+    Or(a=noJump, b=isAInstruction, out=takeInc);
+
+    PC(in=fromRegA, load=loadFromA, inc=takeInc, reset=reset, out[0..14]=pc);
 }
