@@ -1,0 +1,20 @@
+{
+  "editor.defaultFormatter": "ms-python.black-formatter",
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.autoImportUserSymbols": true,
+  "python.linting.enabled": true,
+  "python.languageServer": "Pylance",
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll": true,
+        "source.organizeImports": true
+    }
+  },
+  "isort.args": [
+    "--profile",
+    "black"
+  ],
+  "python.analysis.typeCheckingMode": "strict"
+}
