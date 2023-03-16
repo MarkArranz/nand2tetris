@@ -29,10 +29,14 @@ COMMAND_TYPE_MAP = {
 
 COMMENT_TOKEN = "//"
 
-SEGMENT_SYMBOLS = {
-    "local": "LCL",
+MAPPED_SEGMENTS = {
+    "pointer": 3,
+    "temp": 5,
+}
+
+SYMBOLIC_SEGMENTS = {
     "argument": "ARG",
+    "local": "LCL",
     "this": "THIS",
     "that": "THAT",
-    "temp": "TEMP",
 }

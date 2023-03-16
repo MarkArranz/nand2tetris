@@ -1,4 +1,8 @@
-from constants import SEGMENT_SYMBOLS, CommandType
+from constants import (
+    MAPPED_SEGMENTS,
+    SYMBOLIC_SEGMENTS,
+    CommandType,
+)
 
 
 class CodeWriter:
@@ -8,17 +12,77 @@ class CodeWriter:
         """
         self._out_file = open(output_file, "w")
 
-    def write_arithmetic(self, seg: str, value: int) -> None:
+        # This is used to create unique labels that mark conditional blocks of assembly.
+        self._con_index = 0
+
+    def write_arithmetic(self, op: str) -> None:
         """
         Writes to the output file the assembly code that implements the given arithmetic-logical commands.
         """
-        self._pop_to_D()
-        self._decrement_SP()
+        if op not in ["neg", "not"]:
+            self._pop_to_D()
+        self._dec_SP()
 
-        if "add" == seg:
+        ## ARITHMETIC COMMANDS
+        if "add" == op:
             self._write("M=D+M")
+        elif "sub" == op:
+            self._write("M=M-D")
+        elif "neg" == op:
+            self._write("M=-M")
 
-        self._increment_SP()
+        ## LOGICAL COMMANDS
+        elif "and" == op:
+            self._write("M=D&M")
+        elif "or" == op:
+            self._write("M=D|M")
+        elif "not" == op:
+            self._write("M=!M")
+
+        ## CONDITIONAL LOGIC COMMANDS
+        elif op in ["eq", "gt", "lt"]:
+            # D = x - y
+            self._write("D=M-D")
+
+            # Skips the FALSE BLOCK if conditional is true.
+            self._write(f"@START_TRUE_{self._con_index}")
+
+            if "eq" == op:
+                # if x - y == 0, then x == y.
+                self._write("D;JEQ")
+            elif "gt" == op:
+                # if x - y > 0, then x > y.
+                self._write("D;JGT")
+            elif "lt" == op:
+                # if x - y < 0, then x < y.
+                self._write("D;JLT")
+
+            ## START FALSE BLOCK ##
+            self._write("@SP")
+            self._write("A=M")
+            self._write("M=0")
+
+            # Skip to the end of the TRUE BLOCK.
+            self._write(f"@END_TRUE_{self._con_index}")
+            self._write("0;JMP")
+            ## END FALSE BLOCK ##
+
+            ## START TRUE BLOCK ##
+            # Marks the start of the TRUE BLOCK.
+            self._write(f"(START_TRUE_{self._con_index})")
+            self._write("@SP")
+            self._write("A=M")
+            self._write("M=-1")
+
+            # Marks the end of the TRUE BLOCK.
+            self._write(f"(END_TRUE_{self._con_index})")
+            ## END TRUE BLOCK ##
+
+            self._con_index += 1
+        else:
+            raise Exception(f"Invalid op code: {op}")
+
+        self._inc_SP()
 
     def write_push_pop(self, cmd: CommandType, seg: str, index: int) -> None:
         """
@@ -59,7 +123,7 @@ class CodeWriter:
         """
         self._write(f"// {comment}")
 
-    def close(self) -> None:
+    def close_file(self) -> None:
         """
         Closes the output file/stream.
         """
@@ -71,9 +135,25 @@ class CodeWriter:
     def _goto_seg_addr(self, seg: str, offset_or_const: int) -> None:
         if "constant" == seg:
             self._write(f"@{offset_or_const}")
-        else:
+
+        elif "static" == seg:
+            self._write(f"@{self._out_file.name}.{offset_or_const}")
+
+        elif seg in MAPPED_SEGMENTS:
+            if "pointer" == seg and (offset_or_const != 0 and offset_or_const != 1):
+                raise Exception(
+                    f"Invalid pointer offset: {offset_or_const}. Value must be 0 or 1."
+                )
+            if "temp" == seg and 7 < offset_or_const:
+                raise Exception(
+                    "Invalid temp offset: {offset_or_const}. Offset must be between 0 - 7 inclusive."
+                )
+
+            self._write(f"@{MAPPED_SEGMENTS[seg] + offset_or_const}")
+
+        elif seg in SYMBOLIC_SEGMENTS:
             # go to address where segment's base index is kept
-            self._write(f"@{SEGMENT_SYMBOLS.get(seg)}")
+            self._write(f"@{SYMBOLIC_SEGMENTS[seg]}")
             # put the segment's base index in D-reg
             self._write("D=M")
             # load the offset into A-reg
@@ -81,13 +161,16 @@ class CodeWriter:
             # go to the address of segment's base index + the offset
             self._write("A=D+A")
 
-    def _increment_SP(self):
+        else:
+            raise Exception(f"Invalid segment: {seg}")
+
+    def _inc_SP(self):
         # go to where stack pointer address is kept
         self._write("@SP")
         # increment the stack pointer's address value and go to new address
         self._write("AM=M+1")
 
-    def _decrement_SP(self) -> None:
+    def _dec_SP(self) -> None:
         # go to where stack pointer address is kept
         self._write("@SP")
         # decrement the stack pointer's address value and go to new address
@@ -100,9 +183,9 @@ class CodeWriter:
         self._write("A=M")
         # store the value in D-reg into the stack pointer's address
         self._write("M=D")
-        self._increment_SP()
+        self._inc_SP()
 
     def _pop_to_D(self) -> None:
-        self._decrement_SP()
+        self._dec_SP()
         # store the value at the stack pointer's address into D-reg
         self._write("D=M")

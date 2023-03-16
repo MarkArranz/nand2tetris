@@ -25,12 +25,12 @@ def main(vm_file: str) -> None:
             cw.write_comment(pr.cur_instr)
 
             if CommandType.C_ARITHMETIC == pr.command_type:
-                cw.write_arithmetic(pr.arg1, pr.arg2)
+                cw.write_arithmetic(pr.arg1)
             else:
                 cw.write_push_pop(pr.command_type, pr.arg1, pr.arg2)
     finally:
-        pr.close()
-        cw.close()
+        pr.close_file()
+        cw.close_file()
 
     print(f"Successfully translated {vm_file} to {output_file}")
 

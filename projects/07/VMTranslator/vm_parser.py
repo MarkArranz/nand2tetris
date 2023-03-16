@@ -31,6 +31,9 @@ class Parser:
             (str(rest[0]), int(rest[1])) if bool(rest) else (cmd, 0)
         )
 
+        if self._arg2 < 0:
+            raise Exception("Invalid index: {self._arg2}. Index must be >= 0.")
+
     @property
     def has_more_lines(self) -> bool:
         """
@@ -68,7 +71,7 @@ class Parser:
         """
         return self._arg2
 
-    def close(self) -> None:
+    def close_file(self) -> None:
         """
         Closes the output file/stream.
         """
@@ -79,7 +82,7 @@ class Parser:
             line = self._file.readline()
 
             if not len(line):
-                self.close()
+                self.close_file()
                 return ""
 
             stipped_line = line.strip()
