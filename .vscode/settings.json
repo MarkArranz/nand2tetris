@@ -6,6 +6,10 @@
     "../projects/06/assembler",
     "../projects/07/VMTranslator"
   ],
+  "python.autoComplete.extraPaths": [
+    "../projects/06/assembler",
+    "../projects/07/VMTranslator"
+  ],
   "python.linting.enabled": true,
   "python.languageServer": "Pylance",
   "[python]": {
